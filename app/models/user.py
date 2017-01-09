@@ -9,26 +9,25 @@ from sqlalchemy.sql.expression import func, cast
 import binascii
 from Crypto.Cipher import AES
 
-aes_key = '1234567890123456'
+BS = 16
+pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS).encode()
+unpad = lambda s: s[:-ord(s[len(s)-1:])]
 
 
 def aes_encrypt(data):
-    cipher = AES.new(current_app.config['AES_KEY'])
-    expected_length = 16 * ((len(data) // 16) + 1)
-    padding_length = expected_length - len(data)
+    data_enc = data.encode()
+    raw = pad(data_enc)
+    cipher = AES.new(aes_key)
+    enc = cipher.encrypt(raw)
 
-    data2 = data + chr(padding_length) * padding_length
-
-    return binascii.hexlify(cipher.encrypt(data2))
+    return binascii.hexlify(enc).decode()
 
 
 def aes_decrypt(data):
-    cipher = AES.new(current_app.config['AES_KEY'])
-    dec = cipher.decrypt(binascii.unhexlify(data)).decode()
-
-    if '\x02' in dec:
-        dec = dec[:dec.index('\x02')]
-    return dec
+    enc = binascii.unhexlify(data)
+    cipher = AES.new(aes_key)
+    dec = cipher.decrypt(enc)
+    return unpad(dec).decode()
 
 
 class EncryptedUser(db.Model):
@@ -56,8 +55,7 @@ class EncryptedUser(db.Model):
 
     @hybrid_property
     def user_name(self):
-        print(str(aes_decrypt(self.enc_user_name.encode())))
-        return str(aes_decrypt(self.enc_user_name.encode()))
+        return str(aes_decrypt(self.enc_user_name))
 
     @user_name.expression
     def user_name(cls):
@@ -68,8 +66,7 @@ class EncryptedUser(db.Model):
 
     @user_name.setter
     def user_name(self, name):
-        print(aes_encrypt(name).decode())
-        self.enc_user_name = aes_encrypt(name).decode()
+        self.enc_user_name = aes_encrypt(name)
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
