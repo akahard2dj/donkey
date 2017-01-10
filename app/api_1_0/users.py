@@ -51,4 +51,6 @@ class UserApi(Resource):
         return {'message': 'success'}
 
     def delete(self):
+        user = User.query.filter_by(user_id=g.user.user_id)
+        user.delete()
         return {'message': 'ok'}
