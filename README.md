@@ -10,7 +10,7 @@ donkey api
  - 사용자 등록
  - [POST] input: basic auth, json data({useremail,password, username}), output: none
  
-/users/\<int:user_id\>
+/users
  - 사용자 조회/수정/삭제
  - [GET] input: basic auth, userid, output: json_data({username,...})
  - [PUT] input: basic auth, user_id, url_args(type{username:password}, data{content})
