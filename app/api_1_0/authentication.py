@@ -12,6 +12,7 @@ auth = HTTPBasicAuth()
 @auth.verify_password
 def verify_password(useremail_or_token, password):
     # first try to authenticate by token
+    #user = User.query.filter(User.user_email == useremail_or_token)
     user = User.verify_auth_token(useremail_or_token)
     if not user:
         # try to authenticate with username/password
